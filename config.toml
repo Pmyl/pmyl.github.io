@@ -1,0 +1,6 @@
+base_url = "https://pmyl.github.io"
+compile_sass = true
+build_search_index = true
+
+[markdown]
+highlight_code = true
