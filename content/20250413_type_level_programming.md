@@ -66,10 +66,12 @@ fn reverse_list(head: Box<Node>) -> Box<Node> {
 }
 ```
 
-## Implementation - Building blocks
+## Building blocks
 Now that we're all on the same page, let's move on the fun part of the exercise, let's implement the same logic using **only Rust types**.
 
-> 🙋 What does it mean to use only types? Aren't we using types in the standard solution, for example `Box<Node>`?
+{% admonition(type="question") %}
+🙋 What does it mean to use only types? Aren't we using types in the standard solution, for example `Box<Node>`?
+{% end %}
 
 Great question imaginary reader! When I say **only types** I mean **only types**, meaning no functions, no while loop, no variables, no runtime execution. Everything will be done at compile time, and the input, output and logic only exists as types.
 
@@ -90,7 +92,9 @@ A sinlgly linked list is defined by a Node with some data and a pointer to eithe
 struct Nothing;
 struct Node<const DATA: usize, Next: List = Nothing>(PhantomData<Next>);
 ```
-> ❕ In type-level programming each building block of your solution needs to be its own type.
+{% admonition(type="info") %}
+In type-level programming each building block of your solution needs to be its own type.
+{% end %}
 
 There are two main concepts in here that may be confusing, even for readers that dabbled in Rust: [const generics](https://practice.course.rs/generics-traits/const-generics.html) and [PhantomData](https://doc.rust-lang.org/std/marker/struct.PhantomData.html)
 
@@ -98,13 +102,15 @@ I'll be brief in the explanation here, *const generics* are a way to hold consta
 
 In our case, we use *const generics* to hold our node data, and *PhantomData* is used to silence Rust's complaints about us not using the generic parameter Next.
 
-The rest is easy, `Node` needs `Next` to be either `Nothing` or another `Node`, to do this we use the trait `List`
+The rest is easy, `Node` needs `Next` to be either `Nothing` or another `Node`, to allow this we use the trait `List`
 ```Rust
 trait List {}
 impl List for Nothing {}
 impl<const DATA: usize, Next: List> List for Node<DATA, Next> {}
 ```
-> ❕ `List` is an empty trait because where we're going we don't need functions.
+{% admonition(type="info") %}
+`List` is an empty trait because where we're going we don't need functions.
+{% end %}
 
 So... how do we declare a singly linked list, for example `[1] -> [2] -> [3]`? Easy!
 ```Rust
@@ -122,13 +128,17 @@ trait Rev<Prev: List>: List {
     type Output: List;
 }
 ```
-> ❕ It's necessary for the `Rev` trait to implement the `List` trait due to how the logic for Output is implemented, we'll see it later.
+{% admonition(type="info") %}
+It's necessary for the `Rev` trait to implement the `List` trait due to how the logic for Output is implemented, we'll see it later.
+{% end %}
 
 In the standard solution for reversing the linked list we identified two variables: `prev` and `curr`. This trait does the same, it's meant to be implemented for `curr` and has the Prev generic parameter to represent `prev`.
 Output is an associated type that defines the next step in the iteration logic.
 
 ## Entry point
-> 🙋 A trait? Functions can be called e.g. `reverse(my_list)`, how do you use this trait to reverse the linked list?
+{% admonition(type="question") %}
+🙋 A trait? Functions can be called e.g. `reverse(my_list)`, how do you use this trait to reverse the linked list?
+{% end %}
 
 Remember, we're doing type-level programming, let's use a type!
 
@@ -139,7 +149,9 @@ type MyReversedList = Reverse<MyList>;
 ```
 This is a bit of an esoteric formula, but if we read it spelled out it should all make sense. When defining the trait `Rev` we said that it has to be implemented for `curr` right? This means that in `<Head as Rev<Nothing>>` the `Head` is our `curr` and `Nothing` is our `prev`, starting our process that will eventually give us the reversed list in the `Output` associated type.
 
-> ❕ If you notice, this type defines `Step 1` from the visual representation of the process, by setting Nothing as Prev in the first iteration.
+{% admonition(type="tip") %}
+If you notice, this type defines `Step 1` from the visual representation of the process, by setting `Nothing` as `Prev` in the first iteration.
+{% end %}
 
 ## Halting condition
 Now that we have an entry point, let's start implementing one case at a time, starting with the case of an **empty list**
@@ -147,7 +159,10 @@ Now that we have an entry point, let's start implementing one case at a time, st
 type TheListReversed = Reverse<Nothing>;
 ```
 As expected, when the type `TheListReversed` is used we get this compilation error
-> the trait `Rev<Nothing>` is not implemented for `Nothing`
+
+{% admonition(type="failure", title="Compilation error") %}
+the trait `Rev<Nothing>` is not implemented for `Nothing`
+{% end %}
 
 That's right! We created the trait `Rev` but we didn't implement it for any of our building blocks, let's do it for the Nothing struct
 ```Rust
@@ -162,7 +177,9 @@ Does it work? Yes!
 # Test cases (Original -> Reversed)
 Nothing -> Nothing
 ```
-> ❕ All our test cases are printed out using [`println!("{}", std::any::type_name::<MyType>())`](https://doc.rust-lang.org/std/any/fn.type_name.html)
+{% admonition(type="tip") %}
+All our test cases are printed out using [`println!("{}", std::any::type_name::<MyType>())`](https://doc.rust-lang.org/std/any/fn.type_name.html)
+{% end %}
 
 Even though it works as expected, this is underwhelming, `Reverse<Nothing>` is nothing more than an identity type. Don't worry though, this specific implementation will become useful later on as a halting condition of our recursion.
 
@@ -172,9 +189,11 @@ What's our next step? Oh yeah, a list made of a single node
 type TheListReversed = Reverse<Node<1>>;
 ```
 Again, the compiler complains
-> the trait `Rev<Nothing>` is not implemented for `Node<1>`
+{% admonition(type="failure", title="Compilation error") %}
+the trait `Rev<Nothing>` is not implemented for `Node<1>`
+{% end %}
 
-Thank you compiler, much appreciated. Let's do what it said, but more generic, instead of implementing the trait `Rev<Nothing>` just for `Node<1>` we'll implement it for any `Node<DATA>`
+Let's do that, more generally we'll implement the trait `Rev<Nothing>` for any `Node<DATA>`
 ```Rust
 impl<const DATA: usize> Rev<Nothing> for Node<DATA> {
     type Output = /*???*/;
@@ -196,14 +215,16 @@ Node<1> -> Node<1>
 ```
 Fantastic, 3 more lines of code to again achieve the identity type. Please bear with me, these two implementations could be considered both base cases, everything will fit into place soon.
 
-Next step, two nodes! To be clear, the case is a root node with a `Next` node that has `Nothing` as `Next`
+Next step, two nodes!
 ```Rust
 type TheListReversed = Reverse<Node<1, Node<2>>>;
 ```
-Aaaand... compilation error
-> the trait `Rev<Nothing>` is not implemented for `Node<1, Node<2>>`
+Aaaand...
+{% admonition(type="failure", title="Compilation error") %}
+the trait `Rev<Nothing>` is not implemented for `Node<1, Node<2>>`
+{% end %}
 
-That's true, the trait `Rev<Nothing>` is implemented only for the terminal node `Node<DATA, Nothing>`! Let's generalise our trait implementation to cover both terminal and non-terminal nodes. To do this we need to change our `Next` from being `Nothing` to be a generic type of our implementation
+That's true, the trait `Rev<Nothing>` is implemented only for the terminal node `Node<DATA, Nothing>`! Let's generalise our trait implementation to cover both terminal and non-terminal nodes. To do that we need to change our `Next` from being `Nothing` to be a generic type of our implementation
 ```Rust
 impl<
     const DATA: usize,
@@ -240,14 +261,18 @@ As a reminder again, the trait `Rev` defines a generic `Prev` and the implemento
 In the implementation we're saying that the `Next` is now `curr` (because it implements `Rev` in the `<Next as Rev...>`) and the new `Prev` is `Node<DATA, Nothing>`, matching perfectly with what has been defined in `Step 2`!
 
 ...wait what?
-> the trait `Rev<Node<1>>` is not implemented for `Node<2>`
+{% admonition(type="failure", title="Compilation error") %}
+the trait `Rev<Node<1>>` is not implemented for `Node<2>`
+{% end %}
 
 That's right, when implementing `Rev` for a `Node` we only have a specific implementation `impl<...> Rev<Nothing> for Node<...>`, targeting the head of a linked list, a node that has `Nothing` as a `Prev`!
 
 ## Reversing the list
-We're getting close to the end, we implemented steps 1, 2 and 5, but looking at it, steps 3 and 4 are actually the same recursion step!
+We're getting close to the end, we implemented steps 1, 2 and 5, and looking at it, steps 3 and 4 are actually the same recursion step!
 
-> 🙋 Wait, isn't 2 also the same recursion step as 3 and 4?
+{% admonition(type="question") %}
+🙋 Wait, isn't 2 also the same recursion step as 3 and 4?
+{% end %}
 
 Not really... wait... yes you're right, great point imaginary reader! But can we really generalise the trait implementation to apply for any of the steps 2/3/4?
 
