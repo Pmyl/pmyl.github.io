@@ -1,0 +1,3 @@
+[submodule "themes/kita"]
+	path = themes/kita
+	url = git@github.com:st1020/kita.git

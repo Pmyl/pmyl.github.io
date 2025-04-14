@@ -1,6 +1,38 @@
 base_url = "https://pmyl.github.io"
 compile_sass = true
 build_search_index = true
+theme = "kita"
+title = "Pmyl"
+
+default_language = "en"
+generate_feeds = true
+feed_filenames = ["atom.xml"]
+
+taxonomies = [{ name = "tags", rss = true, paginate_by = 5 }]
 
 [markdown]
 highlight_code = true
+
+[extra.profile]
+name = ""
+bio = "code and thoughts"
+
+[[extra.profile.social]]
+name = "github"
+url = "https://github.com/pmyl"
+
+[[extra.profile.social]]
+name = "rss"
+url = "$BASE_URL/atom.xml"
+
+[[extra.menu]]
+name = "Archive"
+url = "$BASE_URL/archive"
+
+[[extra.menu]]
+name = "Tags"
+url = "$BASE_URL/tags"
+
+[[extra.menu]]
+name = "About"
+url = "$BASE_URL/about"

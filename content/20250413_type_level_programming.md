@@ -1,6 +1,8 @@
 +++
 title = "Rust Type-level programming for coding interviews"
-date = 2025-04-13
+date = "2025-04-13"
+[taxonomies]
+tags = ["rust", "code"]
 +++
 
 The other day I watched a nice YouTube video called [Let‘s Solve The Most Popular Leetcode Problem only using TypeScript Types - Reverse Linked Lists](https://www.youtube.com/watch?v=tE5EHyFgA94) by Typed Rocks and it got me thinking, can I do the same in Rust? I remember reading articles about [Rust type system being Turing complete](https://sdleffler.github.io/RustTypeSystemTuringComplete/) so it should be doable, but can **I** do it?
