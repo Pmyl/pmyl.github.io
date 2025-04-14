@@ -87,7 +87,7 @@ impl<const DATA: usize, Next: List> List for Node<DATA, Next> {}
 ```
 **This is a lot**, let's try to digest it one concept at a time.
 
-A sinlgly linked list is defined by a Node with some data and a pointer to either the next Node or to nothing. Out of this very simplistic definition we can identify two building blocks of our solution: Node and Nothing.
+A sinlgly linked list is defined by a `Node` with some data and a pointer to either the next `Node` or to nothing. Out of this very simplistic definition we can identify two building blocks of our solution: `Node` and `Nothing`.
 ```Rust
 struct Nothing;
 struct Node<const DATA: usize, Next: List = Nothing>(PhantomData<Next>);
