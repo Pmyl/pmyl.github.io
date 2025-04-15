@@ -228,7 +228,7 @@ That's true, the trait `Rev<Nothing>` is implemented only for the terminal node 
 ```Rust
 impl<
     const DATA: usize,
-    Next: List
+    Next: /*???*/
 > Rev<Nothing> for Node<DATA, Next> {
     type Output = /*???*/;
 }
