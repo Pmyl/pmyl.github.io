@@ -109,7 +109,7 @@ impl List for Nothing {}
 impl<const DATA: usize, Next: List> List for Node<DATA, Next> {}
 ```
 {% admonition(type="info") %}
-`List` is an empty trait because where we're going we don't need functions.
+`List` is an empty trait for good reasons. Functions? Where we're going, we don't need functions.
 {% end %}
 
 So... how do we declare a singly linked list, for example `[1] -> [2] -> [3]`? Easy!
