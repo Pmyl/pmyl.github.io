@@ -252,13 +252,12 @@ impl<
     const DATA: usize,
     Next: Rev<Node<DATA, Nothing>>
 > Rev<Nothing> for Node<DATA, Next> {
-    type Output =
-        <Next as Rev<Node<DATA, Nothing>>>::Output;
+    type Output = Next::Output;
 }
 ```
 Wow, it was easy!
 As a reminder again, the trait `Rev` defines a generic `Prev` and the implementor is the `curr`.
-In the implementation we're saying that the `Next` is now `curr` (because it implements `Rev` in the `<Next as Rev...>`) and the new `Prev` is `Node<DATA, Nothing>`, matching perfectly with what has been defined in `Step 2`!
+In the implementation we're saying that the `Next` is now `curr` (because it implements `Rev` in the `Next: Rev...`) and the new `Prev` is `Node<DATA, Nothing>`, matching perfectly with what has been defined in `Step 2`!
 
 ...wait what?
 {% admonition(type="failure", title="Compilation error") %}
@@ -286,7 +285,7 @@ impl<
     Prev: List,
     Next: Rev<Node<DATA, Prev>>
 > Rev<Prev> for Node<DATA, Next> {
-    type Output = <Next as Rev<Node<DATA, Prev>>>::Output;
+    type Output = Next::Output;
 }
 ```
 
@@ -325,8 +324,7 @@ impl<
     Prev: List,
     Next: Rev<Node<DATA, Prev>>
 > Rev<Prev> for Node<DATA, Next> {
-    type Output =
-        <Next as Rev<Node<DATA, Prev>>>::Output;
+    type Output = Next::Output;
 }
 
 impl<Prev: List> Rev<Prev> for Nothing {
