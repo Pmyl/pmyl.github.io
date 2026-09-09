@@ -1,0 +1,33 @@
+<style>
+.code_with_image {
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .code_with_image__image {
+    position: relative;
+    justify-content: center;
+    display: flex;
+  }
+}
+
+.code_with_image__image {
+  position: absolute;
+  right: 1.5rem;
+  display: flex;
+  align-items: center;
+  top: {{ image_top | default(value="0") }};
+}
+</style>
+
+{% set parts = body | split(pat="%%%") %}
+
+<div class="code_with_image">
+  <div>
+    {{ parts[0] | trim | markdown | safe }}
+  </div>
+
+  <div class="code_with_image__image">
+    {{ parts[1] | trim | markdown | safe }}
+  </div>
+</div>

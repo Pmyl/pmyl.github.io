@@ -50,28 +50,34 @@ Use the 3D printer to print the shell.
 
 That's the question. I need to learn embedded programming and electronics and I only have an extremely basic knowledge of both from school and personal projects.
 
-I'll start from turning on a led by the press of a button. I'll use `embassy` in the code to control the RPico and I only have the wiring left to do.
+I'll start from something that requires me to learn a bit of both: turning off a led by the press of a button. I'll use `embassy` in the code to control the RPico and I only have the wiring left to do.
 
 `embassy` supports the RPico through the `embassy-rp` crate, super easy to setup:
 
-{% two_columns() %}
-
+{% code_with_image(image_top="22%") %}
 ```rust
-// TODO: missing code because I've done something that doesn't need code
-// Change the example to use code. Button points to a GPIO, GPIO listens for
-// HIGH and makes a different GPIO LOW, and that turns off the button.
-// Basically inverted functionality, so that nobody can say "just skip the button".
-fn main() {}
+#[embassy_executor::main]
+async fn main(spawner: Spawner) {
+    let p = embassy_rp::init(Default::default());
+    let mut button = Input::new(p.PIN_13, Pull::Down);
+    let mut led = Output::new(p.PIN_15, Level::Low);
+
+    led.set_high();
+    loop {
+        button.wait_for_high().await;
+        led.set_low();
+
+        button.wait_for_low().await;
+        led.set_high();
+    }
+}
 ```
-
+<br>
 %%%
-
-# TODO: swap this gif with the new one of the new exercise
-
 ![Press button -> light LED](/i_want_to_make_my_own_simple_tv_remote/button-led.gif)
 {% end %}
 
-The resistor is there to lower the current in the circuit to protect the LED, otherwise the circuit would have little resistance and the LED would die from the high current from the RPico.
+The resistor is there to lower the current in the circuit to protect the LED, otherwise the circuit would have low resistance and the LED would die from the high current from the RPico.
 
 {% admonition(type="info") %}
 **I = V / R** (Amps = Volts / Ohms) \
@@ -86,26 +92,29 @@ Most TVs have remotes that use infrared (IR) to communicate, and Philips TVs are
 
 I could have found the specs online, _but that's not fun_.
 
-So I bought an **IR Receiver**, specifically a TSOP4838. The plan is to turn it on, press the button on the Philips TV remote, read what it sends, record it and replay it when pressing the button of my new tv remote.
+{% two_columns() %}
+So I bought an **IR Receiver**, specifically a TSOP4838. The plan is to turn it on, press the button on the Philips TV remote, *read* what it sends, *record* it and *replay* it when pressing the button of my new tv remote.
+%%%
+<img src="/i_want_to_make_my_own_simple_tv_remote/tsop.png" alt="TSOP4838" style="height: 130px; margin: 0;">
+{% end %}
 
-# TODO: show an image of the receiver on the right next to the above paragraph
+After some wiring, learning what a Low Pass RC Filter is and what pull up/down, I can start testing it with my multimeter and... it's not built correctly?
 
-After some wiring, learning what a Low Pass RC Filter is and what pull up/down or no pull mean, I can start testing it with my multimeter and... it's not built correctly?
+![Receiver OUT 1.28V](/i_want_to_make_my_own_simple_tv_remote/receiver_128v.png)
 
-# TODO: show the image of the multimeter showing 1.x when measuring the receiver due to the GPIO's shenanigans
+The above should show a value slightly lower than 3.3V, not 1.28V!
 
-The above should show a value slightly lower than 3.3V, not 1.3V!
-
-The voltage in input to the receiver is 3.3V minus whatever voltage is across the resistor, and the resistor is only a 100 Ohm, stealing only a small part of the voltage. From my calculations it should be around 0.1V, leaving 3.2\~V in input to the receiver.
-Then, without any IR received, the receiver should be **pulled up** and output the same input voltage, so where are the 3.2-1.3=**1.9\~V**?
+The voltage in input to the receiver is 3.3V minus whatever voltage is across the resistor, and the resistor is only a 100 Ohm, stealing only a small part of the voltage. From my measurements it's 0.03V, leaving 3.27\~V in input to the receiver.
+Then, without any IR received, the receiver should be **pulled up** and output the same input voltage, so where are the 3.27-1.28=**2\~V**?
 
 The receiver's output is wired to a GPIO that I wanted to use as an input to read the signal, but that meant that the voltage is affected by it. By default a non-configured GPIO is **pulled down**, resulting in the internal resistor being part of the circuit, but in our case we want to use that pin to just be an observer of the voltage running across it, and to do that there is an easy fix:
 
 ```rs
-// gpio with Pull NONE
+// Neither pulled down nor pulled up, just an observer
+let ir_rx = Input::new(p.PIN_15, Pull::None);
 ```
 
-# TODO: show image of 3.3~ V reading
+![Receiver OUT 3.27V](/i_want_to_make_my_own_simple_tv_remote/receiver_327v.png)
 
 Now we're talking.
 

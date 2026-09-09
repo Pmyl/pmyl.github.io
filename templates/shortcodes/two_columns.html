@@ -1,17 +1,16 @@
 <style>
 .two_columns {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, {{ left_column | default(value="auto") }}) minmax(0, {{ right_column | default(value="auto") }});
   gap: 1.5rem;
-  align-items: start;
-  margin: 1.5rem 0;
+  align-items: center;
 }
 
 .two-columns > div {
   min-width: 0;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 768px) {
   .two_columns {
     grid-template-columns: 1fr;
   }
