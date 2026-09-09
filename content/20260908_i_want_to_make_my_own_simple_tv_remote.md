@@ -9,18 +9,18 @@ I want to make my own simple tv remote. I've been thinking of making one for yea
 
 ### Why now?
 
-I slept with the Apple TV remote in my hand and it got in the bed sheets... that my wife put in the washing machine. She felt so guilty, even though it was my fault, but I felt so energized.
+I slept with the Apple TV remote in my hand and it got in the bed sheets... that my wife put in the washing machine. She felt so guilty, even though it was my fault.
 
-So after ordering sushi and ensuring my wife was happy again, it was time for our family to have our own customized tv remote!
+So after ordering sushi and ensuring my wife was happy again, I felt so energized, it was time for our family to have our own customized tv remote!
 
 ### Addressing the elephant in the room: Universal remotes
 
 Universal remotes are a no go, the reason is easy to plot into a table:
 
-| Remote   | Buttons                | Functionality                 | Enjoyment of the process |
-| -------- | ---------------------- | ----------------------------- | ------------------------ |
-| Universal | 🚫 too many or too few | ✅ great                      | 🚫 none                  |
-| Mine     | ✅ perfect amount      | ✅ as good as I want it to be | ✅ lots                  |
+| Remote    | Buttons                | Enjoyment of the process |
+| --------- | ---------------------- | ------------------------ |
+| Universal | 🚫 too many or too few | 🚫 none                  |
+| Mine      | ✅ perfect amount      | ✅ lots                  |
 
 ### Goal
 
@@ -55,15 +55,19 @@ I'll start from turning on a led by the press of a button. I'll use `embassy` in
 `embassy` supports the RPico through the `embassy-rp` crate, super easy to setup:
 
 {% two_columns() %}
+
 ```rust
 // TODO: missing code because I've done something that doesn't need code
-// Change the example to use code. Button points to a GPIO, GPIO listens for 
+// Change the example to use code. Button points to a GPIO, GPIO listens for
 // HIGH and makes a different GPIO LOW, and that turns off the button.
 // Basically inverted functionality, so that nobody can say "just skip the button".
 fn main() {}
 ```
+
 %%%
+
 # TODO: swap this gif with the new one of the new exercise
+
 ![Press button -> light LED](/i_want_to_make_my_own_simple_tv_remote/button-led.gif)
 {% end %}
 
@@ -74,7 +78,7 @@ The resistor is there to lower the current in the circuit to protect the LED, ot
 When **R** is low, **I** is high
 {% end %}
 
-This was simple! Unfortunately, this is the first and last simple concept.
+This was simple! Unfortunately, this is the first and last simple concept for me to understand.
 
 ### 3 Rs: Read, Record, Replay - The setup
 
@@ -82,19 +86,20 @@ Most TVs have remotes that use infrared (IR) to communicate, and Philips TVs are
 
 I could have found the specs online, _but that's not fun_.
 
-So I bought an **IR Receiver**, called TSOP. The plan is to turn it on, press the button on the Philips TV remote, read what it sends, record it and replay it when pressing the button of my new tv remote.
+So I bought an **IR Receiver**, specifically a TSOP4838. The plan is to turn it on, press the button on the Philips TV remote, read what it sends, record it and replay it when pressing the button of my new tv remote.
 
-# TODO: show an image of the tsop on the right next to the above paragraph
+# TODO: show an image of the receiver on the right next to the above paragraph
 
-After some wiring, learning what a Low Pass Filter is, I can start testing it with my multimeter and hope I built everything correctly... well, it's not?
+After some wiring, learning what a Low Pass RC Filter is and what pull up/down or no pull mean, I can start testing it with my multimeter and... it's not built correctly?
 
-# TODO: show the image of the multimeter showing 1.x when measuring the TSOP due to the GPIO's shenanigans
+# TODO: show the image of the multimeter showing 1.x when measuring the receiver due to the GPIO's shenanigans
 
-The above should show around 3.3V! Without any IR received, the TSOP should output the same input voltage (3.3V from the RPico 36th pin), so where did the leftover voltage go?
+The above should show a value slightly lower than 3.3V, not 1.3V!
 
-The TSOP output was wired to a GPIO that I wanted to use as an input to read the values, but that meant that the voltage gets affected by it. Apparently there is a concept of "pull" for the GPIOs, to define what GND means for them, in case of `Pull::DOWN` the GPIO uses the internal resistor, and as I learned before, resistors reduces the voltage in the circuit.
+The voltage in input to the receiver is 3.3V minus whatever voltage is across the resistor, and the resistor is only a 100 Ohm, stealing only a small part of the voltage. From my calculations it should be around 0.1V, leaving 3.2\~V in input to the receiver.
+Then, without any IR received, the receiver should be **pulled up** and output the same input voltage, so where are the 3.2-1.3=**1.9\~V**?
 
-Easy fix:
+The receiver's output is wired to a GPIO that I wanted to use as an input to read the signal, but that meant that the voltage is affected by it. By default a non-configured GPIO is **pulled down**, resulting in the internal resistor being part of the circuit, but in our case we want to use that pin to just be an observer of the voltage running across it, and to do that there is an easy fix:
 
 ```rs
 // gpio with Pull NONE
@@ -105,11 +110,11 @@ Easy fix:
 Now we're talking.
 
 {% admonition(type="info") %}
-Above I mentioned the Low Pass Filter, it's used for
+Please go read how Low Pass RC Filter and pull up/down/none work, they are fascinating mechanisms!
 {% end %}
 
-# TODO: conclude the above for Low Pass Filter
+### 3 Rs: Read, Record, Replay - Read
 
-### 3 Rs: Read, Record, Replay - The maths
+Next, let's use this bad boy to read the IR emitted by the Philips TV remote. This means knowing how the IR receiver works: there is a chip inside that **pulls down** when it sees an IR signal of around 38kHz, and **pulls up** when it doesn't. The practical effect is that when the Philips TV remote sends the signal, the receiver's output has 0V across it, otherwise it has 3.3~V, and since that's connected to the RPico, we can see in code whenever the the voltage goes high or goes low.
 
-Next, let's use this bad boy to read the IR emitted by the Philips TV remote. This means understanding how the TSOP works. The IR receiver transform
+That's how IR tv remotes sends: a digital signal in quick intervals CONTINUE HERE, REVIEW THE ABOVE SECTION
