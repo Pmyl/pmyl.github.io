@@ -11,7 +11,7 @@ I want to make my own simple tv remote. I've been thinking of making one for yea
 
 I slept with the Apple TV remote in my hand and it got in the bed sheets... that my wife put in the washing machine. She felt so guilty, even though it was my fault, but I felt so energized.
 
-So after ordering sushi and ensuring my wife is happy again, it's time for our family to have our own customized tv remote!
+So after ordering sushi and ensuring my wife was happy again, it was time for our family to have our own customized tv remote!
 
 ### Addressing the elephant in the room: Universal remotes
 
@@ -19,7 +19,7 @@ Universal remotes are a no go, the reason is easy to plot into a table:
 
 | Remote   | Buttons                | Functionality                 | Enjoyment of the process |
 | -------- | ---------------------- | ----------------------------- | ------------------------ |
-| Universl | 🚫 too many or too few | ✅ great                      | 🚫 none                  |
+| Universal | 🚫 too many or too few | ✅ great                      | 🚫 none                  |
 | Mine     | ✅ perfect amount      | ✅ as good as I want it to be | ✅ lots                  |
 
 ### Goal
@@ -54,27 +54,35 @@ I'll start from turning on a led by the press of a button. I'll use `embassy` in
 
 `embassy` supports the RPico through the `embassy-rp` crate, super easy to setup:
 
-```rs
-
+{% two_columns() %}
+```rust
+// TODO: missing code because I've done something that doesn't need code
+// Change the example to use code. Button points to a GPIO, GPIO listens for 
+// HIGH and makes a different GPIO LOW, and that turns off the button.
+// Basically inverted functionality, so that nobody can say "just skip the button".
+fn main() {}
 ```
+%%%
+# TODO: swap this gif with the new one of the new exercise
+![Press button -> light LED](/i_want_to_make_my_own_simple_tv_remote/button-led.gif)
+{% end %}
 
-# TODO: also show the result as a gif, it would be cool to put it next to the code if it fits
-
-The resistor is there to offer resistance, taking on some voltage and lower the current, otherwise the led I bought, that is designed for 2~ Volt, dies from the 3.3 Volts from the RPico.
+The resistor is there to lower the current in the circuit to protect the LED, otherwise the circuit would have little resistance and the LED would die from the high current from the RPico.
 
 {% admonition(type="info") %}
-I know the GPIO reduces the voltage and yada yada, I don't really understand it so let's assume it doesn't do that.
+**I = V / R** (Amps = Volts / Ohms) \
+When **R** is low, **I** is high
 {% end %}
 
 This was simple! Unfortunately, this is the first and last simple concept.
 
 ### 3 Rs: Read, Record, Replay - The setup
 
-Most TVs have remotes that use infrared (IR) to send commands to them, and Philips TVs are among those. But what and how should we send to the TV?
+Most TVs have remotes that use infrared (IR) to communicate, and Philips TVs are no different. But how and what should we send to the TV?
 
-I could have found the specification online, _but that's not fun_.
+I could have found the specs online, _but that's not fun_.
 
-So I bought an IR Receiver, called TSOP. The plan is to turn it on, press the button on the Philips TV remote, read what it sends, record it and replay it when pressing the button of my new tv remote.
+So I bought an **IR Receiver**, called TSOP. The plan is to turn it on, press the button on the Philips TV remote, read what it sends, record it and replay it when pressing the button of my new tv remote.
 
 # TODO: show an image of the tsop on the right next to the above paragraph
 
@@ -82,7 +90,7 @@ After some wiring, learning what a Low Pass Filter is, I can start testing it wi
 
 # TODO: show the image of the multimeter showing 1.x when measuring the TSOP due to the GPIO's shenanigans
 
-The above should show 3.3V! Without any IR received, the TSOP should output the same input voltage (3.3V from the RPico 36th pin), so where did the leftover voltage go?
+The above should show around 3.3V! Without any IR received, the TSOP should output the same input voltage (3.3V from the RPico 36th pin), so where did the leftover voltage go?
 
 The TSOP output was wired to a GPIO that I wanted to use as an input to read the values, but that meant that the voltage gets affected by it. Apparently there is a concept of "pull" for the GPIOs, to define what GND means for them, in case of `Pull::DOWN` the GPIO uses the internal resistor, and as I learned before, resistors reduces the voltage in the circuit.
 
