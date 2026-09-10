@@ -144,3 +144,13 @@ Next, let's use this bad boy to read the IR emitted by the Philips TV remote. Th
 ### 3 Rs: Read, Record, Replay - Replay
 
 // Do it first, then write it
+
+### Future: bluetooth
+
+// connection is not enough
+
+// request security so it requests pairing
+
+// get bond so that it doesn't have to pair every time
+
+// save bond in a dedicated space in flash
