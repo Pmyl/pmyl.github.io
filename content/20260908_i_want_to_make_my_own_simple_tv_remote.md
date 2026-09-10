@@ -26,8 +26,8 @@ Universal remotes are a no go, the reason is easy to plot into a table:
 
 I have a Philips TV with an Apple TV plugged into it. The tv remote has to work with both, these are the buttons need:
 
-- **Apple TV**: UP, DOWN, LEFT, RIGHT, SELECT, MENU, HOME, VOL+, VOL-, MUTE, PLAY/PAUSE
-- **Philips TV**: UP, DOWN, OK, SOURCES
+- **Apple TV**: POWER, UP, DOWN, LEFT, RIGHT, SELECT, MENU, HOME, VOL+, VOL-, MUTE, PLAY/PAUSE
+- **Philips TV**: POWER, UP, DOWN, OK, SOURCES
 
 **Battery life**: at least 1 month of usage without charging \
 **Battery**: rechargeable with USB TYPE C \
@@ -40,9 +40,9 @@ Most of it can be achieved with the Apple TV remote, but few things are missing:
 
 ### Plan
 
-Use Rust to write embedded code, use Bluetooth to connect to Apple TV, use IR to command the Philips TV, learn to use resistors, transistors, capacitors, leds, IR and Bluetooth protocols.
+Use Rust to write embedded code, use Bluetooth to connect to Apple TV, use IR to command the Philips TV, learn to use resistors, transistors, capacitors, leds, IR and Bluetooth protocols along the way.
 
-Use the _Raspberry Pico W_ I have for the testing phase, buy a better chip for the final result.
+Use the spare _Raspberry Pico W_ for the testing phase, buy a better chip for the final result.
 
 Use the 3D printer to print the shell.
 
@@ -60,9 +60,8 @@ I'll start from something that requires me to learn a bit of both: turning off a
 async fn main(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
     let mut button = Input::new(p.PIN_13, Pull::Down);
-    let mut led = Output::new(p.PIN_15, Level::Low);
+    let mut led = Output::new(p.PIN_15, Level::High);
 
-    led.set_high();
     loop {
         button.wait_for_high().await;
         led.set_low();
@@ -84,7 +83,7 @@ The resistor is there to lower the current in the circuit to protect the LED, ot
 When **R** is low, **I** is high
 {% end %}
 
-This was simple! Unfortunately, this is the first and last simple concept for me to understand.
+This was simple! I'm sure the rest of the steps will follow suit ;)
 
 ### 3 Rs: Read, Record, Replay - The setup
 
@@ -93,21 +92,23 @@ Most TVs have remotes that use infrared (IR) to communicate, and Philips TVs are
 I could have found the specs online, _but that's not fun_.
 
 {% two_columns() %}
-So I bought an **IR Receiver**, specifically a TSOP4838. The plan is to turn it on, press the button on the Philips TV remote, *read* what it sends, *record* it and *replay* it when pressing the button of my new tv remote.
+So I bought an **IR Receiver**, specifically a *TSOP4838*. The plan is to turn it on, press the button on the Philips TV remote, *read* what it sends, *record* it and *replay* it when pressing the button of my new tv remote.
 %%%
 <img src="/i_want_to_make_my_own_simple_tv_remote/tsop.png" alt="TSOP4838" style="height: 130px; margin: 0;">
 {% end %}
 
-After some wiring, learning what a Low Pass RC Filter is and what pull up/down, I can start testing it with my multimeter and... it's not built correctly?
+After some wiring, learning what a Low Pass RC Filter is and how pull up/down work, I can start testing it with my multimeter and... it's not built correctly?
 
 ![Receiver OUT 1.28V](/i_want_to_make_my_own_simple_tv_remote/receiver_128v.png)
 
 The above should show a value slightly lower than 3.3V, not 1.28V!
 
 The voltage in input to the receiver is 3.3V minus whatever voltage is across the resistor, and the resistor is only a 100 Ohm, stealing only a small part of the voltage. From my measurements it's 0.03V, leaving 3.27\~V in input to the receiver.
-Then, without any IR received, the receiver should be **pulled up** and output the same input voltage, so where are the 3.27-1.28=**2\~V**?
+Then, without any IR received, the receiver should be **pulled up** and output the same input voltage, so where are the remaining 3.27-1.28=**2\~V**?
 
-The receiver's output is wired to a GPIO that I wanted to use as an input to read the signal, but that meant that the voltage is affected by it. By default a non-configured GPIO is **pulled down**, resulting in the internal resistor being part of the circuit, but in our case we want to use that pin to just be an observer of the voltage running across it, and to do that there is an easy fix:
+*Found them!* The receiver's output is wired to a GPIO that I want to use as an input to read the signal, but that means that the voltage is affected by it, specifically by its resistor that becomes part of the circuit when the GPIO is **pulled down**. And we definitely all know that that's the default state right? *Surely there is no need to waste 20 minutes struggling with it.*
+
+In any case, for our purposes we want to use that pin to just be an observer of the voltage running across it, for that there is an easy fix:
 
 ```rs
 // Neither pulled down nor pulled up, just an observer
@@ -124,6 +125,22 @@ Please go read how Low Pass RC Filter and pull up/down/none work, they are fasci
 
 ### 3 Rs: Read, Record, Replay - Read
 
-Next, let's use this bad boy to read the IR emitted by the Philips TV remote. This means knowing how the IR receiver works: there is a chip inside that **pulls down** when it sees an IR signal of around 38kHz, and **pulls up** when it doesn't. The practical effect is that when the Philips TV remote sends the signal, the receiver's output has 0V across it, otherwise it has 3.3~V, and since that's connected to the RPico, we can see in code whenever the the voltage goes high or goes low.
+Next, let's use this bad boy to read the IR emitted by the Philips TV remote. This means knowing how the IR receiver works: there is a chip inside that **pulls down** when it sees an IR signal of around 38kHz, and **pulls up** when it doesn't. The practical effect is that when the Philips TV remote sends the signal, the receiver's output has 0V across it, otherwise it has 3.3~V, and since that's connected to the RPico, we can see in code if the pin reads high or low.
 
-That's how IR tv remotes sends: a digital signal in quick intervals CONTINUE HERE, REVIEW THE ABOVE SECTION
+// let's read, read randomly
+
+// adjust by waiting for a pause
+
+// identify that the lead is around 2700 micro seconds, matching RC6 protocol, link to https://www.sbprojects.net/knowledge/ir/rc6.php
+
+### 3 Rs: Read, Record, Replay - Record
+
+// decode signal
+
+// some panics (damn I don't have the debug probe, but looking at the code was enough), when the signal ends in 0 we don't really notice it, we have to manually add it
+
+// variance and errors, only pick the output if it works 3 times in a row
+
+### 3 Rs: Read, Record, Replay - Replay
+
+// Do it first, then write it
